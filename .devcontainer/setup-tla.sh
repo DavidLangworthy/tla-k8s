@@ -21,7 +21,8 @@ install_codex() {
 
 make tools
 java -version
-java -cp "${TLA2TOOLS:-.tools/tla2tools.jar}" tlc2.TLC -help >/dev/null
+tlc_help="$(java -cp "${TLA2TOOLS:-.tools/tla2tools.jar}" tlc2.TLC -help 2>&1 || true)"
+grep -q "TLC" <<<"$tlc_help"
 install_codex
 codex --version >/dev/null
 command -v gh >/dev/null
