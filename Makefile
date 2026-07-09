@@ -3,7 +3,7 @@ TLA2TOOLS ?= $(TOOLS_DIR)/tla2tools.jar
 TLA2TOOLS_URL ?= https://github.com/tlaplus/tlaplus/releases/latest/download/tla2tools.jar
 TLC := java -cp $(TLA2TOOLS) tlc2.TLC
 
-.PHONY: tools check safety stable-liveness failure-liveness
+.PHONY: tools check safety stable-liveness failure-liveness explore explore-sequence
 
 tools: $(TLA2TOOLS)
 
@@ -21,3 +21,10 @@ stable-liveness:
 
 failure-liveness:
 	$(TLC) -config K8sPodNodeGpuFailureLiveness.cfg K8sPodNodeGpu
+
+explore:
+	@if [ -z "$(CONFIG)" ]; then echo "usage: make explore CONFIG=runs/configs/<name>.cfg [LABEL=name] [TIMEOUT_SECONDS=600]" >&2; exit 2; fi
+	runs/scripts/run_tlc.sh "$(CONFIG)" "$(LABEL)"
+
+explore-sequence:
+	runs/scripts/run_sequence.sh
