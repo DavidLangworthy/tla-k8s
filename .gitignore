@@ -1,0 +1,5 @@
+.tools/
+states/
+*.class
+*.log
+*.out

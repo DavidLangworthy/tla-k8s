@@ -1,0 +1,23 @@
+{
+  "name": "TLA+ Kubernetes Model",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "installMaven": false,
+      "installGradle": false
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup-tla.sh",
+  "remoteEnv": {
+    "TLA2TOOLS": "${containerWorkspaceFolder}/.tools/tla2tools.jar"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "alygin.vscode-tlaplus",
+        "github.vscode-github-actions"
+      ]
+    }
+  }
+}
