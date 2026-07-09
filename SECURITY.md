@@ -14,3 +14,8 @@ The repository is configured for:
 - CodeQL analysis for GitHub Actions workflows.
 - Dependabot updates for GitHub Actions and devcontainer dependencies.
 - Secret scanning and push protection where the GitHub plan/repository visibility supports them.
+
+For a private repository, CodeQL upload requires GitHub Advanced Security/code
+scanning to be enabled for the repository. After enabling it, set the repository
+variable `GHAS_ENABLED=true` so `.github/workflows/codeql.yml` runs analysis
+instead of the explanatory skip job.
