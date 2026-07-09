@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+host="${GH_HOST:-github.com}"
+scopes="${GH_LOGIN_SCOPES:-repo,workflow,read:org,codespace,read:packages,write:packages,security_events}"
+
+printf 'Requesting GitHub OAuth scopes for %s: %s\n' "$host" "$scopes" >&2
+
+if gh auth status -h "$host" >/dev/null 2>&1; then
+  exec gh auth refresh -h "$host" --scopes "$scopes"
+fi
+
+exec gh auth login -h "$host" --git-protocol https --web --scopes "$scopes"

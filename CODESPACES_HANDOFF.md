@@ -37,6 +37,7 @@ git pull --ff-only
 command -v codex
 codex --version
 command -v gh
+command -v gh-login
 command -v tmux
 tmux -V
 java -version
@@ -58,12 +59,19 @@ codex doctor
 
 Do not copy `~/.codex/auth.json` into the repo.
 
-If GitHub CLI is not authenticated in the Codespace and you need PR comments,
-Actions inspection, or pushes that require `gh`, run:
+If GitHub CLI is not authenticated in the Codespace, or if it needs the scopes
+for PR comments, Actions inspection, Codespaces, GHCR package access, or code
+scanning/security-event APIs, run:
 
 ```sh
-gh auth login
+gh-login
 gh auth status
+```
+
+`gh-login` requests:
+
+```text
+repo,workflow,read:org,codespace,read:packages,write:packages,security_events
 ```
 
 ## TLC Exploration Plan
