@@ -46,6 +46,11 @@ To cache the fully built container, enable a Codespaces prebuild in the GitHub U
 
 The repository also builds and pushes the devcontainer image to GitHub Container Registry so container layers stay warm between updates.
 
+The checked-in TLC configs are intentionally small enough for CI. To explore a
+larger state space, increase `Pods`, `Nodes`, `MaxGeneration`, or
+`NodeCapacity` in a copy of the relevant `.cfg` file and run TLC from
+Codespaces.
+
 Equivalent direct command:
 
 ```sh
