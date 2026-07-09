@@ -6,8 +6,6 @@ per_run_timeout_seconds="${TIMEOUT_SECONDS:-600}"
 
 if [ "$#" -eq 0 ]; then
   set -- \
-    "runs/configs/safety-1p1n-gen1.cfg:safety-1p1n-gen1" \
-    "runs/configs/safety-1p2n-gen0.cfg:safety-1p2n-gen0" \
     "runs/configs/safety-2p1n-gen0.cfg:safety-2p1n-gen0" \
     "runs/configs/safety-2p2n-gen0.cfg:safety-2p2n-gen0"
 fi

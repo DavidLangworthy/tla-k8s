@@ -18,8 +18,8 @@ From a Codespace or another machine with Java and `tla2tools.jar`:
 TIMEOUT_SECONDS=600 make explore CONFIG=runs/configs/safety-2p1n-gen0.cfg LABEL=safety-2p1n-gen0
 ```
 
-To take baby steps up in model size and stop when the total exploration budget
-is reached:
+To take baby steps up in the two-pod model size and stop when the total
+exploration budget is reached:
 
 ```sh
 TOTAL_TIMEOUT_SECONDS=1800 TIMEOUT_SECONDS=600 make explore-sequence
@@ -34,7 +34,7 @@ or counterexample needs more detail.
 Each run summary should make it clear whether TLC actually explored a meaningful
 state space. At minimum check:
 
-- TLC outcome: success, failure, or timeout.
+- TLC outcome: success, failure, timeout, or interrupted.
 - Duration.
 - Final state summary, such as `N states generated, M distinct states found`.
 - Complete-search depth, or the last progress line for bounded/timeout runs.

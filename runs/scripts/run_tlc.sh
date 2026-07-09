@@ -58,6 +58,7 @@ duration_seconds=$((end_epoch - start_epoch))
 case "$status" in
   0) outcome="success" ;;
   124|137) outcome="timeout" ;;
+  130|143) outcome="interrupted" ;;
   *) outcome="failure" ;;
 esac
 
