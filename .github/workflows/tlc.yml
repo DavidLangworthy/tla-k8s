@@ -35,6 +35,12 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Cache TLA+ tools
+        uses: actions/cache@v4
+        with:
+          path: .tools/tla2tools.jar
+          key: tla2tools-latest
+
       - name: Download TLA+ tools
         run: make tools
 

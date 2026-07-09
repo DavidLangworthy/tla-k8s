@@ -21,7 +21,30 @@ make stable-liveness TLA2TOOLS=/path/to/tla2tools.jar
 make failure-liveness TLA2TOOLS=/path/to/tla2tools.jar
 ```
 
-In Codespaces, the devcontainer installs Java and downloads TLA+ tools during creation, so the plain `make safety`, `make stable-liveness`, and `make failure-liveness` targets should work.
+In Codespaces, the devcontainer image includes Java and `tla2tools.jar`, so the plain `make safety`, `make stable-liveness`, and `make failure-liveness` targets should work.
+
+## Codespaces
+
+Create a Codespace on the PR branch with an idle timeout:
+
+```sh
+gh codespace create \
+  -R DavidLangworthy/tla-k8s \
+  -b codex/codespaces-ci-security \
+  --machine basicLinux32gb \
+  --idle-timeout 30m \
+  --retention-period 72h \
+  --devcontainer-path .devcontainer/devcontainer.json
+```
+
+To cache the fully built container, enable a Codespaces prebuild in the GitHub UI:
+
+1. Open the repository on GitHub.
+2. Go to **Settings > Codespaces > Prebuild configurations**.
+3. Add a prebuild for the target branch and `.devcontainer/devcontainer.json`.
+4. Use the same region you normally create Codespaces in.
+
+The repository also builds and pushes the devcontainer image to GitHub Container Registry so container layers stay warm between updates.
 
 Equivalent direct command:
 

@@ -17,3 +17,8 @@ updates:
       devcontainers:
         patterns:
           - "*"
+
+  - package-ecosystem: docker
+    directory: /.devcontainer
+    schedule:
+      interval: weekly

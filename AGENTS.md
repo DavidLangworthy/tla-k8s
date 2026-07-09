@@ -13,9 +13,9 @@ make stable-liveness
 make failure-liveness
 ```
 
-`make tools` downloads `tla2tools.jar` into `.tools/`. Do not vendor the jar in the repository.
+`make tools` downloads `tla2tools.jar` into `.tools/` unless `TLA2TOOLS` points at a preinstalled jar. Do not vendor the jar in the repository.
 
-The local Mac workspace intentionally does not need Java. Run TLC in GitHub Actions, Codespaces, or another remote Linux environment.
+The local Mac workspace intentionally does not need Java. Run TLC in GitHub Actions, Codespaces, or another remote Linux environment. In Codespaces, `TLA2TOOLS` points at `/opt/tla2tools/tla2tools.jar`, which is baked into the devcontainer image.
 
 ## Modeling Guidelines
 
