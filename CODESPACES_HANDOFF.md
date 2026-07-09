@@ -85,9 +85,11 @@ repository, a manual clone works without a rebuild:
 gh repo clone DavidLangworthy/jobtree /workspaces/jobtree
 ```
 
-For a new Codespace, or if `jobtree` becomes private and the Codespace token
-needs the new repository permission, create or rebuild the Codespace and approve
-the requested `contents: read` access when prompted.
+Rebuilding the current Codespace can rerun post-create setup, but GitHub does
+not apply newly requested repository permissions to existing Codespaces. For a
+future private `jobtree` checkout, create a new Codespace and approve the
+requested `contents: read` access, or run `gh-login` inside the existing
+Codespace and use those user credentials.
 
 ## TLC Exploration Plan
 
