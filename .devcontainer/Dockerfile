@@ -9,9 +9,15 @@ RUN apt-get update \
       bubblewrap \
       ca-certificates \
       curl \
+      gh \
+      jq \
+      less \
       openjdk-21-jre-headless \
       make \
       openssh-server \
+      procps \
+      time \
+      tmux \
     && mkdir -p /opt/tla2tools /run/sshd \
     && curl -fsSL -o /opt/tla2tools/tla2tools.jar "${TLA2TOOLS_URL}" \
     && chmod 0644 /opt/tla2tools/tla2tools.jar \

@@ -36,6 +36,9 @@ git switch codex/codespaces-ci-security
 git pull --ff-only
 command -v codex
 codex --version
+command -v gh
+command -v tmux
+tmux -V
 java -version
 java -cp "${TLA2TOOLS:-/opt/tla2tools/tla2tools.jar}" tlc2.TLC -help >/dev/null
 ```
@@ -55,12 +58,27 @@ codex doctor
 
 Do not copy `~/.codex/auth.json` into the repo.
 
+If GitHub CLI is not authenticated in the Codespace and you need PR comments,
+Actions inspection, or pushes that require `gh`, run:
+
+```sh
+gh auth login
+gh auth status
+```
+
 ## TLC Exploration Plan
 
 Default exploration should start with two pods. Run:
 
 ```sh
+tmux new -s tlc
 TOTAL_TIMEOUT_SECONDS=1800 TIMEOUT_SECONDS=600 make explore-sequence
+```
+
+Detach from the run with `Ctrl-b d`. Reattach later with:
+
+```sh
+tmux attach -t tlc
 ```
 
 The default sequence is:
