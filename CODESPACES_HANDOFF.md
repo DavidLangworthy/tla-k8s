@@ -39,6 +39,7 @@ codex --version
 command -v gh
 command -v gh-login
 command -v tmux
+test -d /workspaces/jobtree/.git
 tmux -V
 java -version
 java -cp "${TLA2TOOLS:-/opt/tla2tools/tla2tools.jar}" tlc2.TLC -help >/dev/null
@@ -73,6 +74,20 @@ gh auth status
 ```text
 repo,workflow,read:org,codespace,read:packages,write:packages,security_events
 ```
+
+The devcontainer requests read access to `DavidLangworthy/jobtree` and clones it
+as a sibling checkout at `/workspaces/jobtree` during post-create setup. Existing
+Codespaces do not automatically gain new `devcontainer.json` repository
+permissions just because the file changed. For the current public `jobtree`
+repository, a manual clone works without a rebuild:
+
+```sh
+gh repo clone DavidLangworthy/jobtree /workspaces/jobtree
+```
+
+For a new Codespace, or if `jobtree` becomes private and the Codespace token
+needs the new repository permission, create or rebuild the Codespace and approve
+the requested `contents: read` access when prompted.
 
 ## TLC Exploration Plan
 

@@ -19,11 +19,34 @@ install_codex() {
   rm -rf "$tmpdir"
 }
 
+clone_jobtree() {
+  local repo="${JOBTREE_REPO:-DavidLangworthy/jobtree}"
+  local target="${JOBTREE_DIR:-/workspaces/jobtree}"
+
+  if [ -d "$target/.git" ]; then
+    echo "jobtree already cloned at $target"
+    return
+  fi
+
+  if [ -e "$target" ]; then
+    echo "Refusing to clone $repo: $target exists but is not a git checkout" >&2
+    return 1
+  fi
+
+  mkdir -p "$(dirname "$target")"
+  if command -v gh >/dev/null 2>&1 && gh auth status -h github.com >/dev/null 2>&1; then
+    gh repo clone "$repo" "$target"
+  else
+    git clone "https://github.com/${repo}.git" "$target"
+  fi
+}
+
 make tools
 java -version
 tlc_help="$(java -cp "${TLA2TOOLS:-.tools/tla2tools.jar}" tlc2.TLC -help 2>&1 || true)"
 grep -q "TLC" <<<"$tlc_help"
 install_codex
+clone_jobtree
 codex --version >/dev/null
 command -v gh >/dev/null
 command -v jq >/dev/null

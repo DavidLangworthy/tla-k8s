@@ -8,6 +8,15 @@
     "TLA2TOOLS": "/opt/tla2tools/tla2tools.jar"
   },
   "customizations": {
+    "codespaces": {
+      "repositories": {
+        "DavidLangworthy/jobtree": {
+          "permissions": {
+            "contents": "read"
+          }
+        }
+      }
+    },
     "vscode": {
       "extensions": [
         "alygin.vscode-tlaplus",
