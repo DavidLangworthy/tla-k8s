@@ -19,10 +19,10 @@ RUN apt-get update \
       time \
       tmux \
     && mkdir -p /opt/tla2tools /run/sshd \
-    && curl -fsSL -o /opt/tla2tools/tla2tools.jar "${TLA2TOOLS_URL}" \
+    && curl --retry 5 --retry-delay 2 --retry-all-errors -fsSL -o /opt/tla2tools/tla2tools.jar "${TLA2TOOLS_URL}" \
     && chmod 0644 /opt/tla2tools/tla2tools.jar \
     && mkdir -p /opt/codex \
-    && curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_HOME=/opt/codex CODEX_RELEASE="${CODEX_RELEASE}" CODEX_NON_INTERACTIVE=1 CODEX_INSTALL_DIR=/usr/local/bin sh \
+    && curl --retry 5 --retry-delay 2 --retry-all-errors -fsSL https://chatgpt.com/codex/install.sh | CODEX_HOME=/opt/codex CODEX_RELEASE="${CODEX_RELEASE}" CODEX_NON_INTERACTIVE=1 CODEX_INSTALL_DIR=/usr/local/bin sh \
     && chmod -R a+rX /opt/codex \
     && test -x /usr/local/bin/codex \
     && rm -rf /var/lib/apt/lists/*
