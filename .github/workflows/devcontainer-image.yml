@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - codex/codespaces-ci-security
     paths:
       - .devcontainer/**
       - .github/workflows/devcontainer-image.yml
