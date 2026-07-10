@@ -1,0 +1,32 @@
+{
+  "name": "TLA+ Kubernetes Model",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb",
+    "storage": "32gb"
+  },
+  "postCreateCommand": "bash .devcontainer/setup-tla.sh",
+  "remoteEnv": {
+    "TLA2TOOLS": "/opt/tla2tools/tla2tools.jar"
+  },
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "DavidLangworthy/jobtree": {
+          "permissions": {
+            "contents": "read"
+          }
+        }
+      }
+    },
+    "vscode": {
+      "extensions": [
+        "alygin.vscode-tlaplus",
+        "github.vscode-github-actions"
+      ]
+    }
+  }
+}

@@ -1,0 +1,48 @@
+name: TLC
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  model-check:
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - safety
+          - stable-liveness
+          - failure-liveness
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Cache TLA+ tools
+        uses: actions/cache@v4
+        with:
+          path: .tools/tla2tools.jar
+          key: tla2tools-latest
+
+      - name: Download TLA+ tools
+        run: make tools
+
+      - name: Run TLC target
+        run: make ${{ matrix.target }}

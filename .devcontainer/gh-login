@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+host="${GH_HOST:-github.com}"
+scopes="${GH_LOGIN_SCOPES:-repo,workflow,read:org,codespace,read:packages,write:packages,security_events}"
+
+usage() {
+  cat <<EOF
+usage: gh-login [--print-scopes]
+
+Authenticate GitHub CLI for this Codespaces workflow.
+
+Environment:
+  GH_HOST           GitHub host. Default: github.com
+  GH_LOGIN_SCOPES  Comma-separated scopes to request.
+                   Default: $scopes
+EOF
+}
+
+case "${1:-}" in
+  "")
+    ;;
+  --print-scopes)
+    printf '%s\n' "$scopes"
+    exit 0
+    ;;
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
+
+printf 'Requesting GitHub OAuth scopes for %s: %s\n' "$host" "$scopes" >&2
+
+if gh auth status -h "$host" >/dev/null 2>&1; then
+  exec gh auth refresh -h "$host" --scopes "$scopes"
+fi
+
+exec gh auth login -h "$host" --git-protocol https --web --scopes "$scopes"

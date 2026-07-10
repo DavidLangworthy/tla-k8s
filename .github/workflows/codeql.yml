@@ -1,0 +1,49 @@
+name: CodeQL
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "33 9 * * 2"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  ghas-required:
+    name: GHAS availability
+    if: ${{ github.event.repository.private && vars.GHAS_ENABLED != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report skipped CodeQL upload
+        run: |
+          echo "CodeQL upload is skipped because this private repository does not have GitHub Advanced Security/code scanning enabled."
+          echo "After enabling GHAS for the repository, set repository variable GHAS_ENABLED=true to run this workflow."
+
+  analyze-actions:
+    name: Analyze GitHub Actions
+    if: ${{ !github.event.repository.private || vars.GHAS_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: actions
+          queries: security-extended,security-and-quality
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:actions
