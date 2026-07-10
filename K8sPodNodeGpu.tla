@@ -544,6 +544,11 @@ BindHistoryNotFromFuture ==
   \A p \in Pods, g \in Generations, n \in Nodes:
     (<<p, g, n>> \in bindHistory => g <= generation[p])
 
+PriorGenerationsWereBound ==
+  \A p \in Pods, g \in Generations:
+    (g < generation[p]
+      => \E n \in Nodes: <<p, g, n>> \in bindHistory)
+
 UnassignedPhasesHaveNoNode ==
   \A p \in Pods:
     (phase[p] \in {"Gated", "Pending", "Backoff", "Unschedulable",
@@ -569,6 +574,7 @@ SafetyInvariants ==
   /\ ReservationPrecedesCurrentBind
   /\ BackoffConsistency
   /\ BindHistoryNotFromFuture
+  /\ PriorGenerationsWereBound
   /\ UnassignedPhasesHaveNoNode
   /\ NonReservedPhasesHaveNoReservation
   /\ GateConsistency
@@ -595,6 +601,12 @@ PersistentSlowGpuHandled ==
     []((<>[] (nodeOf[p] = n /\ phase[p] = "Degraded"
               /\ NeedsGpu(p) /\ gpuState[n] = "Slow"))
        => <> (phase[p] \in {"Succeeded", "Failed", "Deleting", "Deleted"}))
+
+PersistentGpuFaultManifests ==
+  \A p \in Pods, n \in Nodes:
+    []((<>[] (nodeOf[p] = n /\ phase[p] \in RuntimePhases
+              /\ NeedsGpu(p) /\ gpuState[n] = "Faulty"))
+       => <> (phase[p] \in {"Failed", "Deleting", "Deleted"}))
 
 PersistentReachabilityRefreshesObservation ==
   \A n \in Nodes:

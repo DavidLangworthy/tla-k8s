@@ -125,19 +125,20 @@ TIMEOUT_SECONDS=600 make explore \
 - The default safety and failure-liveness configs now set `MaxGeneration = 1`,
   so the proof rails cover one controller recreation rather than only the
   initial Pod incarnation.
-- Four lifecycle-coherence invariants are checked: assigned phases have a node,
-  reservations precede the current bind, delay is zero outside `Backoff`, and
-  bind history never refers to a future generation.
-- Persistent contact-loss, node-failure, and slow-GPU properties are scoped to
-  every execution suffix. An earlier handled fault therefore cannot discharge
-  a later incarnation's obligation.
+- Five lifecycle-coherence invariants are checked: assigned phases have a node,
+  reservations precede the current bind, delay is zero outside `Backoff`, bind
+  history never refers to a future generation, and every prior generation
+  retains a bind record.
+- Persistent contact-loss, node-failure, slow-GPU, and faulty-GPU properties
+  are scoped to every execution suffix. An earlier handled fault therefore
+  cannot discharge a later incarnation's obligation.
 - On July 10, 2026, both two-generation rails completed with
   `267073 states generated`, `32256 distinct states found`, and no error.
-  Failure liveness additionally checked four temporal branches over `129024`
+  Failure liveness additionally checked five temporal branches over `161280`
   tableau states.
-- Negative controls were run and removed: a broken `Bind` was rejected by
-  `AssignedPhasesHaveNode`, and removing lost-contact fairness produced the
-  expected temporal counterexample.
+- Negative controls were run and removed: broken `Bind` and history-erasing
+  recreation transitions violated their targeted invariants, while removing
+  lost-contact or GPU-fault fairness produced temporal counterexamples.
 - Safety exploration configs ending in `-sym.cfg` use `ModelSymmetry`; the
   liveness configs intentionally do not.
 - `safety-2p1n-gen0` stays unsymmetrized because one node plus the gated/ungated

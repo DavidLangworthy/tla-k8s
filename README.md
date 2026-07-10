@@ -75,6 +75,7 @@ Safety invariants include:
 - `ReservationPrecedesCurrentBind`: a Pod cannot reserve after its current generation has already bound.
 - `BackoffConsistency`: delay state is zero outside the `Backoff` phase.
 - `BindHistoryNotFromFuture`: bind history cannot refer to a generation newer than the Pod.
+- `PriorGenerationsWereBound`: every earlier Pod generation retains its bind record after recreation.
 - `NoCapacityOvercommit`: bound and reserved Pods do not exceed abstract node capacity.
 - `AssignedImpliesBindHistory`: assigned Pods have a recorded bind event.
 - `GateConsistency`: scheduling gates only move from present to removed.
@@ -87,6 +88,7 @@ Liveness properties include:
 - `PersistentContactLossManifests`: from every point after which an active Pod remains disconnected, a later state is `Unknown`, `Failed`, `Deleting`, or `Deleted`.
 - `PersistentNodeFailureManifests`: from every point after which an active Pod remains on a failed node, the failure later manifests in the Pod lifecycle.
 - `PersistentSlowGpuHandled`: from every point after which slow-GPU degradation persists, the Pod is later completed, failed, or deleted under fair detection.
+- `PersistentGpuFaultManifests`: from every point after which a GPU Pod remains on a faulty GPU, the Pod is later failed or deleted under fair detection.
 - `PersistentReachabilityRefreshesObservation`: once communication to a node remains up, stale scheduler observations are refreshed infinitely often.
 
 The failure-liveness rail also checks one recreation, so an earlier
