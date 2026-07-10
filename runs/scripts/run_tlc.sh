@@ -63,6 +63,7 @@ case "$status" in
 esac
 
 specification="$(awk '/^SPECIFICATION[[:space:]]+/ {print $2; exit}' "$config")"
+symmetry="$(awk '/^SYMMETRY[[:space:]]+/ {print $2; exit}' "$config")"
 state_summary="$(grep -E '^[0-9]+ states generated, [0-9]+ distinct states found' "$log" | tail -1 || true)"
 depth_line="$(grep -E '^The depth of the complete state graph search is ' "$log" | tail -1 || true)"
 diameter_line="$(grep -E '^The diameter of the state graph is ' "$log" | tail -1 || true)"
@@ -70,7 +71,7 @@ last_progress="$(grep -E '^Progress\([0-9]+\)' "$log" | tail -1 || true)"
 completion_line="$(grep -E 'Model checking completed|Error:|Finished checking temporal properties' "$log" | tail -1 || true)"
 constants_block="$(awk '
   /^CONSTANTS[[:space:]]*$/ {in_constants=1; next}
-  /^(INVARIANTS|PROPERTIES)[[:space:]]*$/ {in_constants=0}
+  /^(SYMMETRY|INVARIANTS|PROPERTIES)([[:space:]]|$)/ {in_constants=0}
   in_constants && NF {print}
 ' "$config")"
 
@@ -84,6 +85,7 @@ constants_block="$(awk '
   echo "- Module: $module"
   echo "- Config: $config"
   echo "- Specification: ${specification:-unknown}"
+  echo "- Symmetry: ${symmetry:-none}"
   echo "- Timeout: ${timeout_seconds}s"
   echo "- Outcome: $outcome"
   echo "- Exit status: $status"

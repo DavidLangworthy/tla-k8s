@@ -76,7 +76,8 @@ repo,workflow,read:org,codespace,read:packages,write:packages,security_events
 
 ## TLC Exploration Plan
 
-Default exploration should start with two pods. Run:
+Default exploration should start with the two-pod safety configs, using
+symmetry where it is nontrivial. Run:
 
 ```sh
 tmux new -s tlc
@@ -92,7 +93,7 @@ tmux attach -t tlc
 The default sequence is:
 
 1. `runs/configs/safety-2p1n-gen0.cfg`
-2. `runs/configs/safety-2p2n-gen0.cfg`
+2. `runs/configs/safety-2p2n-gen0-sym.cfg`
 
 Stop after the first timeout, failure, or interrupted run unless there is a
 specific reason to continue. Commit the generated Markdown summaries under
@@ -103,8 +104,8 @@ For a single run:
 
 ```sh
 TIMEOUT_SECONDS=600 make explore \
-  CONFIG=runs/configs/safety-2p1n-gen0.cfg \
-  LABEL=safety-2p1n-gen0
+  CONFIG=runs/configs/safety-2p2n-gen0-sym.cfg \
+  LABEL=safety-2p2n-gen0-sym
 ```
 
 ## Safety Checks Before Claiming Success
@@ -121,11 +122,17 @@ TIMEOUT_SECONDS=600 make explore \
 
 - CI smoke checks are intentionally small and already exercise the safety,
   stable-liveness, and failure-liveness configs.
+- Safety exploration configs ending in `-sym.cfg` use `ModelSymmetry`; the
+  liveness configs intentionally do not.
+- `safety-2p1n-gen0` stays unsymmetrized because one node plus the gated/ungated
+  pod split leaves only the identity permutation.
 - `safety-1p1n-gen1` completed in Codespaces in 5 seconds:
   `267073 states generated`, `32256 distinct states found`.
 - `safety-1p2n-gen0` was interrupted after 651 seconds because the next
   exploration should focus on two-pod cases. Last progress:
   `115580198 states generated`, `12280558 distinct states found`,
   `4601835 states left on queue`.
+- Use `runs/configs/safety-1p2n-gen0-sym.cfg` when you want a direct
+  before/after comparison against that unsymmetrized baseline.
 - The related research survey is checked in as `deep-research-report.md`; do
   not fold it into the model yet.

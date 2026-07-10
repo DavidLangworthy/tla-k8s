@@ -1,5 +1,5 @@
 ---------------------------- MODULE K8sPodNodeGpu ----------------------------
-EXTENDS Naturals, FiniteSets
+EXTENDS Naturals, FiniteSets, TLC
 
 (*
 This is an abstract model of Kubernetes-style Pod scheduling plus enough
@@ -26,6 +26,7 @@ CONSTANTS
 ASSUME
   /\ Pods # {}
   /\ Nodes # {}
+  /\ Pods \cap Nodes = {}
   /\ GpuPods \subseteq Pods
   /\ GatedPods \subseteq Pods
   /\ MaxGeneration \in Nat
@@ -54,6 +55,26 @@ NodeOrNone == Nodes \cup {NoNode}
 Generations == 0..MaxGeneration
 BindTriples ==
   {<<p, g, n>> : p \in Pods, g \in Generations, n \in Nodes}
+
+GpuGatedPods == GpuPods \cap GatedPods
+GpuOnlyPods == GpuPods \ GatedPods
+GatedOnlyPods == GatedPods \ GpuPods
+PlainPods == Pods \ (GpuPods \cup GatedPods)
+
+(* TLC symmetry reduction must preserve the constant-defined pod roles. *)
+PodRoleSymmetry ==
+  {(((gpuGated @@ gpuOnly) @@ gatedOnly) @@ plain) :
+     gpuGated \in Permutations(GpuGatedPods),
+     gpuOnly \in Permutations(GpuOnlyPods),
+     gatedOnly \in Permutations(GatedOnlyPods),
+     plain \in Permutations(PlainPods)}
+
+NodeSymmetry == Permutations(Nodes)
+
+ModelSymmetry ==
+  {(podPerm @@ nodePerm) :
+     podPerm \in PodRoleSymmetry,
+     nodePerm \in NodeSymmetry}
 
 VARIABLES
   phase,
