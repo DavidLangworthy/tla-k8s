@@ -17,6 +17,7 @@ RUN apt-get update \
       make \
       openssh-server \
       procps \
+      ripgrep \
       time \
       tmux \
     && mkdir -p /opt/tla2tools /run/sshd \

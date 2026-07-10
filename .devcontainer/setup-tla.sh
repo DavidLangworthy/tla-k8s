@@ -21,6 +21,24 @@ install_codex() {
   rm -rf "$tmpdir"
 }
 
+configure_codex() {
+  local config_dir="${CODEX_HOME:-$HOME/.codex}"
+  local config_file="$config_dir/config.toml"
+
+  if [ -e "$config_file" ]; then
+    return
+  fi
+
+  mkdir -p "$config_dir"
+  cat >"$config_file" <<'EOF'
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+
+[projects."/workspaces/tla-k8s"]
+trust_level = "trusted"
+EOF
+}
+
 clone_jobtree() {
   local repo="${JOBTREE_REPO:-DavidLangworthy/jobtree}"
   local target="${JOBTREE_DIR:-/workspaces/jobtree}"
@@ -48,6 +66,7 @@ java -version
 tlc_help="$(java -cp "${TLA2TOOLS:-.tools/tla2tools.jar}" tlc2.TLC -help 2>&1 || true)"
 grep -q "TLC" <<<"$tlc_help"
 install_codex
+configure_codex
 clone_jobtree
 codex --version >/dev/null
 command -v gh >/dev/null
