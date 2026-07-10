@@ -9,6 +9,7 @@ The model is intentionally abstract. It treats Kubernetes `Pod` phase as too coa
 - `K8sPodNodeGpu.tla` is the model.
 - `K8sPodNodeGpuSafety.cfg` explores failure-rich behavior, including one controller recreation, and checks safety invariants.
 - `K8sPodNodeGpuStableLiveness.cfg` disables disruptive environment actions and checks that schedulable Pods eventually run.
+- `K8sPodNodeGpuQueueRecovery.cfg` checks that fitting Pods recover from `Backoff` and `Unschedulable` queue states under fair retry.
 - `K8sPodNodeGpuFailureLiveness.cfg` keeps failures and one controller recreation enabled, and checks that persistent node/link/GPU faults eventually manifest in Pod state under fair detection.
 - `Makefile` wraps TLC commands if `tla2tools.jar` is available.
 
@@ -18,10 +19,11 @@ The model is intentionally abstract. It treats Kubernetes `Pod` phase as too coa
 make tools
 make safety TLA2TOOLS=/path/to/tla2tools.jar
 make stable-liveness TLA2TOOLS=/path/to/tla2tools.jar
+make queue-recovery-liveness TLA2TOOLS=/path/to/tla2tools.jar
 make failure-liveness TLA2TOOLS=/path/to/tla2tools.jar
 ```
 
-In Codespaces, the devcontainer image includes Java and `tla2tools.jar`, so the plain `make safety`, `make stable-liveness`, and `make failure-liveness` targets should work.
+In Codespaces, the devcontainer image includes Java and `tla2tools.jar`, so the plain `make safety`, `make stable-liveness`, `make queue-recovery-liveness`, and `make failure-liveness` targets should work.
 
 ## Codespaces
 
@@ -64,6 +66,7 @@ java -cp /path/to/tla2tools.jar tlc2.TLC -config K8sPodNodeGpuSafety.cfg K8sPodN
 - `nodeState`, `gpuState`, `cordoned`, and `link` are actual environment state.
 - `Slow` GPU is not automatically fatal. The model includes `MarkGpuSlow` and `EvictSlowPod` so a plugin/operator policy can either tolerate degraded execution or evict it.
 - `cordoned[n]` blocks new scheduling once observed, but it does not evict already-bound Pods.
+- `Unschedulable` Pods must pass through `RequeueIfFit` before they can reserve; `Backoff` Pods cannot retry until their delay reaches zero.
 
 ## Main Checks
 
@@ -85,6 +88,7 @@ The default safety rail checks both generation 0 and one recreated generation.
 Liveness properties include:
 
 - `StableEventuallyServed`: in a stable healthy cluster, every Pod eventually reaches `Running`, `Degraded`, or `Succeeded`.
+- `QueueRecoveryEventuallyServed`: in a stable fitting cluster, a Pod already in `Backoff` or `Unschedulable` eventually reaches a served state under fair timer, requeue, reserve, bind, and start actions.
 - `PersistentContactLossManifests`: from every point after which an active Pod remains disconnected, a later state is `Unknown`, `Failed`, `Deleting`, or `Deleted`.
 - `PersistentNodeFailureManifests`: from every point after which an active Pod remains on a failed node, the failure later manifests in the Pod lifecycle.
 - `PersistentSlowGpuHandled`: from every point after which slow-GPU degradation persists, the Pod is later completed, failed, or deleted under fair detection.

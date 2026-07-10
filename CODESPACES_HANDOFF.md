@@ -120,8 +120,8 @@ TIMEOUT_SECONDS=600 make explore \
 
 ## Current Notes
 
-- CI smoke checks are intentionally small and already exercise the safety,
-  stable-liveness, and failure-liveness configs.
+- CI smoke checks are intentionally small and exercise the safety,
+  stable-liveness, queue-recovery-liveness, and failure-liveness configs.
 - The default safety and failure-liveness configs now set `MaxGeneration = 1`,
   so the proof rails cover one controller recreation rather than only the
   initial Pod incarnation.
@@ -133,12 +133,16 @@ TIMEOUT_SECONDS=600 make explore \
   are scoped to every execution suffix. An earlier handled fault therefore
   cannot discharge a later incarnation's obligation.
 - On July 10, 2026, both two-generation rails completed with
-  `267073 states generated`, `32256 distinct states found`, and no error.
+  `262465 states generated`, `32256 distinct states found`, and no error.
   Failure liveness additionally checked five temporal branches over `161280`
   tableau states.
 - Negative controls were run and removed: broken `Bind` and history-erasing
   recreation transitions violated their targeted invariants, while removing
   lost-contact or GPU-fault fairness produced temporal counterexamples.
+- Queue recovery checked both `Backoff` and `Unschedulable` seeds:
+  `17 states generated`, `7 distinct states found`, depth 5, and no error.
+  Removing timer or requeue fairness produced the expected stuttering
+  counterexamples. `Unschedulable` can no longer reserve before requeueing.
 - Safety exploration configs ending in `-sym.cfg` use `ModelSymmetry`; the
   liveness configs intentionally do not.
 - `safety-2p1n-gen0` stays unsymmetrized because one node plus the gated/ungated

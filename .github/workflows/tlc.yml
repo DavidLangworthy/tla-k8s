@@ -23,6 +23,7 @@ jobs:
         target:
           - safety
           - stable-liveness
+          - queue-recovery-liveness
           - failure-liveness
 
     steps:

@@ -40,7 +40,7 @@ PodPhases ==
    "Reserved", "Waiting", "Bound", "Running", "Degraded",
    "Succeeded", "Failed", "Unknown", "Deleting", "Deleted"}
 
-SchedulingPhases == {"Pending", "Backoff", "Unschedulable"}
+SchedulingPhases == {"Pending", "Backoff"}
 ReservedPhases == {"Reserved", "Waiting"}
 AssignedPhases == {"Bound", "Running", "Degraded", "Succeeded",
                    "Failed", "Unknown", "Deleting"}
@@ -149,6 +149,24 @@ Init ==
   /\ gate = [p \in Pods |-> p \in GatedPods]
   /\ generation = [p \in Pods |-> 0]
   /\ backoff = [p \in Pods |-> 0]
+  /\ bindHistory = {}
+  /\ nodeState = [n \in Nodes |-> "Ready"]
+  /\ cordoned = [n \in Nodes |-> FALSE]
+  /\ gpuState = [n \in Nodes |-> "Healthy"]
+  /\ link = [n \in Nodes |-> "Up"]
+  /\ seenNodeState = [n \in Nodes |-> "Ready"]
+  /\ seenCordoned = [n \in Nodes |-> FALSE]
+  /\ seenGpuState = [n \in Nodes |-> "Healthy"]
+
+(* Stable, fitting seeds for queue states reached after an earlier disruption. *)
+QueueRecoveryInit ==
+  /\ phase \in [Pods -> {"Backoff", "Unschedulable"}]
+  /\ nodeOf = [p \in Pods |-> NoNode]
+  /\ reservation = [p \in Pods |-> NoNode]
+  /\ gate = [p \in Pods |-> FALSE]
+  /\ generation = [p \in Pods |-> 0]
+  /\ backoff =
+       [p \in Pods |-> IF phase[p] = "Backoff" THEN MaxBackoff ELSE 0]
   /\ bindHistory = {}
   /\ nodeState = [n \in Nodes |-> "Ready"]
   /\ cordoned = [n \in Nodes |-> FALSE]
@@ -479,8 +497,25 @@ StableNext ==
   \/ \E p \in Pods: PodCompletes(p)
   \/ \E n \in Nodes: RefreshObservation(n)
 
+QueueRecoveryNext ==
+  \/ \E p \in Pods: BackoffTick(p)
+  \/ \E p \in Pods: BackoffReady(p)
+  \/ \E p \in Pods: RequeueIfFit(p)
+  \/ \E p \in Pods, n \in Nodes: Reserve(p, n)
+  \/ \E p \in Pods: Bind(p)
+  \/ \E p \in Pods: KubeletStart(p)
+  \/ \E n \in Nodes: RefreshObservation(n)
+
 FairStableProgress ==
   /\ \A p \in Pods: WF_vars(RemoveGate(p))
+  /\ \A p \in Pods, n \in Nodes: WF_vars(Reserve(p, n))
+  /\ \A p \in Pods: WF_vars(Bind(p))
+  /\ \A p \in Pods: WF_vars(KubeletStart(p))
+
+FairQueueRecovery ==
+  /\ \A p \in Pods: WF_vars(BackoffTick(p))
+  /\ \A p \in Pods: WF_vars(BackoffReady(p))
+  /\ \A p \in Pods: WF_vars(RequeueIfFit(p))
   /\ \A p \in Pods, n \in Nodes: WF_vars(Reserve(p, n))
   /\ \A p \in Pods: WF_vars(Bind(p))
   /\ \A p \in Pods: WF_vars(KubeletStart(p))
@@ -495,6 +530,9 @@ FairFailureDetection ==
 SafetySpec == Init /\ [][Next]_vars
 
 StableSpec == Init /\ [][StableNext]_vars /\ FairStableProgress
+
+QueueRecoverySpec ==
+  QueueRecoveryInit /\ [][QueueRecoveryNext]_vars /\ FairQueueRecovery
 
 FailureManifestSpec == Init /\ [][Next]_vars /\ FairFailureDetection
 
@@ -583,6 +621,8 @@ SafetyInvariants ==
 StableEventuallyServed ==
   \A p \in Pods:
     <> (phase[p] \in {"Running", "Degraded", "Succeeded"})
+
+QueueRecoveryEventuallyServed == StableEventuallyServed
 
 PersistentContactLossManifests ==
   \A p \in Pods, n \in Nodes:
