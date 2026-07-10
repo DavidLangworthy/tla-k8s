@@ -122,12 +122,26 @@ TIMEOUT_SECONDS=600 make explore \
 
 - CI smoke checks are intentionally small and already exercise the safety,
   stable-liveness, and failure-liveness configs.
+- The default safety and failure-liveness configs now set `MaxGeneration = 1`,
+  so the proof rails cover one controller recreation rather than only the
+  initial Pod incarnation.
+- Four lifecycle-coherence invariants are checked: assigned phases have a node,
+  reservations precede the current bind, delay is zero outside `Backoff`, and
+  bind history never refers to a future generation.
+- Persistent contact-loss, node-failure, and slow-GPU properties are scoped to
+  every execution suffix. An earlier handled fault therefore cannot discharge
+  a later incarnation's obligation.
+- On July 10, 2026, both two-generation rails completed with
+  `267073 states generated`, `32256 distinct states found`, and no error.
+  Failure liveness additionally checked four temporal branches over `129024`
+  tableau states.
+- Negative controls were run and removed: a broken `Bind` was rejected by
+  `AssignedPhasesHaveNode`, and removing lost-contact fairness produced the
+  expected temporal counterexample.
 - Safety exploration configs ending in `-sym.cfg` use `ModelSymmetry`; the
   liveness configs intentionally do not.
 - `safety-2p1n-gen0` stays unsymmetrized because one node plus the gated/ungated
   pod split leaves only the identity permutation.
-- `safety-1p1n-gen1` completed in Codespaces in 5 seconds:
-  `267073 states generated`, `32256 distinct states found`.
 - `safety-1p2n-gen0` was interrupted after 651 seconds because the next
   exploration should focus on two-pod cases. Last progress:
   `115580198 states generated`, `12280558 distinct states found`,

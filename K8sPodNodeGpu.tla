@@ -528,6 +528,22 @@ AssignedImpliesBindHistory ==
   \A p \in Pods:
     (nodeOf[p] # NoNode => <<p, generation[p], nodeOf[p]>> \in bindHistory)
 
+AssignedPhasesHaveNode ==
+  \A p \in Pods:
+    (phase[p] \in AssignedPhases => nodeOf[p] \in Nodes)
+
+ReservationPrecedesCurrentBind ==
+  \A p \in Pods:
+    (reservation[p] # NoNode => HasNoCurrentBind(p))
+
+BackoffConsistency ==
+  \A p \in Pods:
+    (phase[p] # "Backoff" => backoff[p] = 0)
+
+BindHistoryNotFromFuture ==
+  \A p \in Pods, g \in Generations, n \in Nodes:
+    (<<p, g, n>> \in bindHistory => g <= generation[p])
+
 UnassignedPhasesHaveNoNode ==
   \A p \in Pods:
     (phase[p] \in {"Gated", "Pending", "Backoff", "Unschedulable",
@@ -549,6 +565,10 @@ SafetyInvariants ==
   /\ NoLeakedReservations
   /\ SingleBinding
   /\ AssignedImpliesBindHistory
+  /\ AssignedPhasesHaveNode
+  /\ ReservationPrecedesCurrentBind
+  /\ BackoffConsistency
+  /\ BindHistoryNotFromFuture
   /\ UnassignedPhasesHaveNoNode
   /\ NonReservedPhasesHaveNoReservation
   /\ GateConsistency
@@ -560,20 +580,21 @@ StableEventuallyServed ==
 
 PersistentContactLossManifests ==
   \A p \in Pods, n \in Nodes:
-    (<>[] (nodeOf[p] = n /\ phase[p] \in RuntimePhases /\ link[n] = "Down"))
-      => <> (phase[p] \in {"Unknown", "Failed", "Deleting", "Deleted"})
+    []((<>[] (nodeOf[p] = n /\ phase[p] \in RuntimePhases
+              /\ link[n] = "Down"))
+       => <> (phase[p] \in {"Unknown", "Failed", "Deleting", "Deleted"}))
 
 PersistentNodeFailureManifests ==
   \A p \in Pods, n \in Nodes:
-    (<>[] (nodeOf[p] = n /\ phase[p] \in RuntimePhases
-           /\ nodeState[n] \in {"NotReady", "Unknown", "Failed"}))
-      => <> (phase[p] \in {"Unknown", "Failed", "Deleting", "Deleted"})
+    []((<>[] (nodeOf[p] = n /\ phase[p] \in RuntimePhases
+              /\ nodeState[n] \in {"NotReady", "Unknown", "Failed"}))
+       => <> (phase[p] \in {"Unknown", "Failed", "Deleting", "Deleted"}))
 
 PersistentSlowGpuHandled ==
   \A p \in Pods, n \in Nodes:
-    (<>[] (nodeOf[p] = n /\ phase[p] = "Degraded"
-           /\ NeedsGpu(p) /\ gpuState[n] = "Slow"))
-      => <> (phase[p] \in {"Succeeded", "Failed", "Deleting", "Deleted"})
+    []((<>[] (nodeOf[p] = n /\ phase[p] = "Degraded"
+              /\ NeedsGpu(p) /\ gpuState[n] = "Slow"))
+       => <> (phase[p] \in {"Succeeded", "Failed", "Deleting", "Deleted"}))
 
 PersistentReachabilityRefreshesObservation ==
   \A n \in Nodes:
