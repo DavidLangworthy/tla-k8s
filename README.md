@@ -25,13 +25,13 @@ In Codespaces, the devcontainer image includes Java and `tla2tools.jar`, so the 
 
 ## Codespaces
 
-Create a Codespace on the PR branch with an idle timeout:
+Create a Codespace on `main` with the larger VM and an idle timeout:
 
 ```sh
 gh codespace create \
   -R DavidLangworthy/tla-k8s \
-  -b codex/codespaces-ci-security \
-  --machine basicLinux32gb \
+  -b main \
+  --machine standardLinux32gb \
   --idle-timeout 30m \
   --retention-period 72h \
   --devcontainer-path .devcontainer/devcontainer.json
@@ -44,7 +44,7 @@ To cache the fully built container, enable a Codespaces prebuild in the GitHub U
 3. Add a prebuild for the target branch and `.devcontainer/devcontainer.json`.
 4. Use the same region you normally create Codespaces in.
 
-The repository also builds and pushes the devcontainer image to GitHub Container Registry so container layers stay warm between updates.
+The repository also builds and pushes the devcontainer image to GitHub Container Registry. New Codespaces use `ghcr.io/davidlangworthy/tla-k8s-devcontainer:main`, so Java, TLC, tmux, GitHub CLI helpers, and Codex CLI are already in warm container layers before post-create setup runs.
 
 The checked-in TLC configs are intentionally small enough for CI. To explore a
 larger state space, increase `Pods`, `Nodes`, `MaxGeneration`, or

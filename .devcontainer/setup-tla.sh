@@ -2,14 +2,16 @@
 set -euo pipefail
 
 install_codex() {
-  local release="${CODEX_RELEASE:-0.101.0}"
+  local release="${CODEX_RELEASE:-0.144.1}"
   local target="${CODEX_TARGET:-x86_64-unknown-linux-musl}"
+  local current_version=""
   local tmpdir
 
-  if codex --version >/dev/null 2>&1; then
+  if current_version="$(codex --version 2>/dev/null | awk '{print $2}')" && [ "$current_version" = "$release" ]; then
     return
   fi
 
+  echo "Installing Codex CLI ${release}"
   tmpdir="$(mktemp -d)"
   curl --retry 5 --retry-delay 2 --retry-all-errors -fsSL \
     -o "$tmpdir/codex.tar.gz" \

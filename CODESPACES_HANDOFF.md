@@ -6,9 +6,9 @@ from the Mac.
 ## Current Target
 
 - Repository: `DavidLangworthy/tla-k8s`
-- Branch: `codex/codespaces-ci-security`
-- PR: `#1`
-- Codespace: `tla-k8s-tlc-vqjw6j4qv93xqgv`
+- Branch: `main`
+- PR: merged as `#1`
+- Codespace: `tla-k8s-tlc-16gb-9jgw7gvq99h7rq9`
 - Machine: `standardLinux32gb` (`4 cores, 16 GB RAM, 32 GB storage`)
 - Idle shutdown: 30 minutes
 
@@ -17,14 +17,14 @@ from the Mac.
 From the Mac, check that the Codespace is available:
 
 ```sh
-gh codespace view -c tla-k8s-tlc-vqjw6j4qv93xqgv \
+gh codespace view -c tla-k8s-tlc-16gb-9jgw7gvq99h7rq9 \
   --json name,state,machineName,idleTimeoutMinutes,retentionPeriodDays
 ```
 
 SSH into it:
 
 ```sh
-gh codespace ssh -c tla-k8s-tlc-vqjw6j4qv93xqgv
+gh codespace ssh -c tla-k8s-tlc-16gb-9jgw7gvq99h7rq9
 ```
 
 Inside the Codespace:
@@ -32,7 +32,7 @@ Inside the Codespace:
 ```sh
 cd /workspaces/tla-k8s
 git fetch origin
-git switch codex/codespaces-ci-security
+git switch main
 git pull --ff-only
 command -v codex
 codex --version
@@ -45,10 +45,9 @@ java -version
 java -cp "${TLA2TOOLS:-/opt/tla2tools/tla2tools.jar}" tlc2.TLC -help >/dev/null
 ```
 
-The current Codespace has Codex CLI `0.101.0` installed under
-`/home/vscode/.local/bin/codex`. The devcontainer also installs that pinned
-release during rebuilds because the `latest` standalone installer path failed
-on July 9, 2026 while resolving Linux release metadata.
+The current Codespace has Codex CLI `0.144.1` installed. The devcontainer image
+bakes that release into `/usr/local/bin/codex`, and post-create setup repairs
+the install if an older image is reused.
 
 If Codex is installed but not authenticated, use device-code auth in the
 Codespace terminal:
@@ -92,11 +91,8 @@ requested `contents: read` access, or run `gh-login` inside the existing
 Codespace and use those user credentials.
 
 The repo declares `hostRequirements` for 4 cores, 16 GB RAM, and 32 GB storage
-so new Codespaces should use the larger VM tier. Changing an existing Codespace
-to the same storage size takes effect on its next restart if it was already
-running. The current Codespace is already configured for `standardLinux32gb`,
-but the running VM may still report the old 2-core/8 GB resources until the next
-stop/start. Do not stop it while active verification work is still running.
+so new Codespaces should use the larger VM tier. The current Codespace is
+already configured for `standardLinux32gb` and reports 4 cores with 16 GB RAM.
 
 ## TLC Exploration Plan
 

@@ -1,8 +1,6 @@
 {
   "name": "TLA+ Kubernetes Model",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
+  "image": "ghcr.io/davidlangworthy/tla-k8s-devcontainer:main",
   "hostRequirements": {
     "cpus": 4,
     "memory": "16gb",
