@@ -9,7 +9,7 @@ from the Mac.
 - Branch: `codex/codespaces-ci-security`
 - PR: `#1`
 - Codespace: `tla-k8s-tlc-vqjw6j4qv93xqgv`
-- Machine: `basicLinux32gb`
+- Machine: `standardLinux32gb` (`4 cores, 16 GB RAM, 32 GB storage`)
 - Idle shutdown: 30 minutes
 
 ## Start Or Resume
@@ -90,6 +90,13 @@ not apply newly requested repository permissions to existing Codespaces. For a
 future private `jobtree` checkout, create a new Codespace and approve the
 requested `contents: read` access, or run `gh-login` inside the existing
 Codespace and use those user credentials.
+
+The repo declares `hostRequirements` for 4 cores, 16 GB RAM, and 32 GB storage
+so new Codespaces should use the larger VM tier. Changing an existing Codespace
+to the same storage size takes effect on its next restart if it was already
+running. The current Codespace is already configured for `standardLinux32gb`,
+but the running VM may still report the old 2-core/8 GB resources until the next
+stop/start. Do not stop it while active verification work is still running.
 
 ## TLC Exploration Plan
 
