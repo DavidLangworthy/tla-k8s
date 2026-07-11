@@ -96,7 +96,8 @@ already configured for `standardLinux32gb` and reports 4 cores with 16 GB RAM.
 
 ## TLC Exploration Plan
 
-Default exploration should start with two pods. Run:
+Default exploration should start with the two-pod safety configs, using
+symmetry where it is nontrivial. Run:
 
 ```sh
 tmux new -s tlc
@@ -112,7 +113,7 @@ tmux attach -t tlc
 The default sequence is:
 
 1. `runs/configs/safety-2p1n-gen0.cfg`
-2. `runs/configs/safety-2p2n-gen0.cfg`
+2. `runs/configs/safety-2p2n-gen0-sym.cfg`
 
 Stop after the first timeout, failure, or interrupted run unless there is a
 specific reason to continue. Commit the generated Markdown summaries under
@@ -123,8 +124,8 @@ For a single run:
 
 ```sh
 TIMEOUT_SECONDS=600 make explore \
-  CONFIG=runs/configs/safety-2p1n-gen0.cfg \
-  LABEL=safety-2p1n-gen0
+  CONFIG=runs/configs/safety-2p2n-gen0-sym.cfg \
+  LABEL=safety-2p2n-gen0-sym
 ```
 
 ## Safety Checks Before Claiming Success
@@ -139,13 +140,39 @@ TIMEOUT_SECONDS=600 make explore \
 
 ## Current Notes
 
-- CI smoke checks are intentionally small and already exercise the safety,
-  stable-liveness, and failure-liveness configs.
-- `safety-1p1n-gen1` completed in Codespaces in 5 seconds:
-  `267073 states generated`, `32256 distinct states found`.
+- CI smoke checks are intentionally small and exercise the safety,
+  stable-liveness, queue-recovery-liveness, and failure-liveness configs.
+- The default safety and failure-liveness configs now set `MaxGeneration = 1`,
+  so the proof rails cover one controller recreation rather than only the
+  initial Pod incarnation.
+- Five lifecycle-coherence invariants are checked: assigned phases have a node,
+  reservations precede the current bind, delay is zero outside `Backoff`, bind
+  history never refers to a future generation, and every prior generation
+  retains a bind record.
+- Persistent contact-loss, node-failure, slow-GPU, and faulty-GPU properties
+  are scoped to every execution suffix. An earlier handled fault therefore
+  cannot discharge a later incarnation's obligation.
+- On July 10, 2026, both two-generation rails completed with
+  `262465 states generated`, `32256 distinct states found`, and no error.
+  Failure liveness additionally checked five temporal branches over `161280`
+  tableau states.
+- Negative controls were run and removed: broken `Bind` and history-erasing
+  recreation transitions violated their targeted invariants, while removing
+  lost-contact or GPU-fault fairness produced temporal counterexamples.
+- Queue recovery checked two concurrent Pods across all four `Backoff` and
+  `Unschedulable` seed combinations: `165 states generated`,
+  `49 distinct states found`, depth 9, and no error.
+  Removing timer or requeue fairness produced the expected stuttering
+  counterexamples. `Unschedulable` can no longer reserve before requeueing.
+- Safety exploration configs ending in `-sym.cfg` use `ModelSymmetry`; the
+  liveness configs intentionally do not.
+- `safety-2p1n-gen0` stays unsymmetrized because one node plus the gated/ungated
+  pod split leaves only the identity permutation.
 - `safety-1p2n-gen0` was interrupted after 651 seconds because the next
   exploration should focus on two-pod cases. Last progress:
   `115580198 states generated`, `12280558 distinct states found`,
   `4601835 states left on queue`.
+- Use `runs/configs/safety-1p2n-gen0-sym.cfg` when you want a direct
+  before/after comparison against that unsymmetrized baseline.
 - The related research survey is checked in as `deep-research-report.md`; do
   not fold it into the model yet.

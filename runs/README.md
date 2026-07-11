@@ -7,8 +7,9 @@ smoke checks.
 
 - `configs/` contains named TLC configs for exploratory runs.
 - `results/` contains committed run summaries and, when useful, raw TLC logs.
-- `scripts/run_tlc.sh` runs a config, captures wall-clock time, parses the TLC
-  state-count lines, and writes a Markdown result.
+- `scripts/run_tlc.sh` runs a config, captures wall-clock time, records any
+  configured symmetry, parses the TLC state-count lines, and writes a Markdown
+  result.
 
 ## Running
 
@@ -24,6 +25,9 @@ exploration budget is reached:
 ```sh
 TOTAL_TIMEOUT_SECONDS=1800 TIMEOUT_SECONDS=600 make explore-sequence
 ```
+
+Safety configs ending in `-sym.cfg` enable `SYMMETRY ModelSymmetry`. Keep the
+liveness configs unsymmetrized.
 
 The runner writes `runs/results/<timestamp>-<label>.md` and a matching `.log`.
 Commit the summaries for runs that matter. The raw log is useful when a timeout

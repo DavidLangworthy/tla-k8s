@@ -10,6 +10,7 @@ Use the Makefile targets:
 make tools
 make safety
 make stable-liveness
+make queue-recovery-liveness
 make failure-liveness
 ```
 

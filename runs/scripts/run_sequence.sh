@@ -7,7 +7,7 @@ per_run_timeout_seconds="${TIMEOUT_SECONDS:-600}"
 if [ "$#" -eq 0 ]; then
   set -- \
     "runs/configs/safety-2p1n-gen0.cfg:safety-2p1n-gen0" \
-    "runs/configs/safety-2p2n-gen0.cfg:safety-2p2n-gen0"
+    "runs/configs/safety-2p2n-gen0-sym.cfg:safety-2p2n-gen0-sym"
 fi
 
 suite_start="$(date +%s)"

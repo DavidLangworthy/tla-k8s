@@ -1,5 +1,5 @@
 ---------------------------- MODULE K8sPodNodeGpu ----------------------------
-EXTENDS Naturals, FiniteSets
+EXTENDS Naturals, FiniteSets, TLC
 
 (*
 This is an abstract model of Kubernetes-style Pod scheduling plus enough
@@ -26,6 +26,7 @@ CONSTANTS
 ASSUME
   /\ Pods # {}
   /\ Nodes # {}
+  /\ Pods \cap Nodes = {}
   /\ GpuPods \subseteq Pods
   /\ GatedPods \subseteq Pods
   /\ MaxGeneration \in Nat
@@ -39,7 +40,7 @@ PodPhases ==
    "Reserved", "Waiting", "Bound", "Running", "Degraded",
    "Succeeded", "Failed", "Unknown", "Deleting", "Deleted"}
 
-SchedulingPhases == {"Pending", "Backoff", "Unschedulable"}
+SchedulingPhases == {"Pending", "Backoff"}
 ReservedPhases == {"Reserved", "Waiting"}
 AssignedPhases == {"Bound", "Running", "Degraded", "Succeeded",
                    "Failed", "Unknown", "Deleting"}
@@ -54,6 +55,26 @@ NodeOrNone == Nodes \cup {NoNode}
 Generations == 0..MaxGeneration
 BindTriples ==
   {<<p, g, n>> : p \in Pods, g \in Generations, n \in Nodes}
+
+GpuGatedPods == GpuPods \cap GatedPods
+GpuOnlyPods == GpuPods \ GatedPods
+GatedOnlyPods == GatedPods \ GpuPods
+PlainPods == Pods \ (GpuPods \cup GatedPods)
+
+(* TLC symmetry reduction must preserve the constant-defined pod roles. *)
+PodRoleSymmetry ==
+  {(((gpuGated @@ gpuOnly) @@ gatedOnly) @@ plain) :
+     gpuGated \in Permutations(GpuGatedPods),
+     gpuOnly \in Permutations(GpuOnlyPods),
+     gatedOnly \in Permutations(GatedOnlyPods),
+     plain \in Permutations(PlainPods)}
+
+NodeSymmetry == Permutations(Nodes)
+
+ModelSymmetry ==
+  {(podPerm @@ nodePerm) :
+     podPerm \in PodRoleSymmetry,
+     nodePerm \in NodeSymmetry}
 
 VARIABLES
   phase,
@@ -128,6 +149,24 @@ Init ==
   /\ gate = [p \in Pods |-> p \in GatedPods]
   /\ generation = [p \in Pods |-> 0]
   /\ backoff = [p \in Pods |-> 0]
+  /\ bindHistory = {}
+  /\ nodeState = [n \in Nodes |-> "Ready"]
+  /\ cordoned = [n \in Nodes |-> FALSE]
+  /\ gpuState = [n \in Nodes |-> "Healthy"]
+  /\ link = [n \in Nodes |-> "Up"]
+  /\ seenNodeState = [n \in Nodes |-> "Ready"]
+  /\ seenCordoned = [n \in Nodes |-> FALSE]
+  /\ seenGpuState = [n \in Nodes |-> "Healthy"]
+
+(* Stable, fitting seeds for queue states reached after an earlier disruption. *)
+QueueRecoveryInit ==
+  /\ phase \in [Pods -> {"Backoff", "Unschedulable"}]
+  /\ nodeOf = [p \in Pods |-> NoNode]
+  /\ reservation = [p \in Pods |-> NoNode]
+  /\ gate = [p \in Pods |-> FALSE]
+  /\ generation = [p \in Pods |-> 0]
+  /\ backoff =
+       [p \in Pods |-> IF phase[p] = "Backoff" THEN MaxBackoff ELSE 0]
   /\ bindHistory = {}
   /\ nodeState = [n \in Nodes |-> "Ready"]
   /\ cordoned = [n \in Nodes |-> FALSE]
@@ -458,8 +497,25 @@ StableNext ==
   \/ \E p \in Pods: PodCompletes(p)
   \/ \E n \in Nodes: RefreshObservation(n)
 
+QueueRecoveryNext ==
+  \/ \E p \in Pods: BackoffTick(p)
+  \/ \E p \in Pods: BackoffReady(p)
+  \/ \E p \in Pods: RequeueIfFit(p)
+  \/ \E p \in Pods, n \in Nodes: Reserve(p, n)
+  \/ \E p \in Pods: Bind(p)
+  \/ \E p \in Pods: KubeletStart(p)
+  \/ \E n \in Nodes: RefreshObservation(n)
+
 FairStableProgress ==
   /\ \A p \in Pods: WF_vars(RemoveGate(p))
+  /\ \A p \in Pods, n \in Nodes: WF_vars(Reserve(p, n))
+  /\ \A p \in Pods: WF_vars(Bind(p))
+  /\ \A p \in Pods: WF_vars(KubeletStart(p))
+
+FairQueueRecovery ==
+  /\ \A p \in Pods: WF_vars(BackoffTick(p))
+  /\ \A p \in Pods: WF_vars(BackoffReady(p))
+  /\ \A p \in Pods: WF_vars(RequeueIfFit(p))
   /\ \A p \in Pods, n \in Nodes: WF_vars(Reserve(p, n))
   /\ \A p \in Pods: WF_vars(Bind(p))
   /\ \A p \in Pods: WF_vars(KubeletStart(p))
@@ -474,6 +530,9 @@ FairFailureDetection ==
 SafetySpec == Init /\ [][Next]_vars
 
 StableSpec == Init /\ [][StableNext]_vars /\ FairStableProgress
+
+QueueRecoverySpec ==
+  QueueRecoveryInit /\ [][QueueRecoveryNext]_vars /\ FairQueueRecovery
 
 FailureManifestSpec == Init /\ [][Next]_vars /\ FairFailureDetection
 
@@ -507,6 +566,27 @@ AssignedImpliesBindHistory ==
   \A p \in Pods:
     (nodeOf[p] # NoNode => <<p, generation[p], nodeOf[p]>> \in bindHistory)
 
+AssignedPhasesHaveNode ==
+  \A p \in Pods:
+    (phase[p] \in AssignedPhases => nodeOf[p] \in Nodes)
+
+ReservationPrecedesCurrentBind ==
+  \A p \in Pods:
+    (reservation[p] # NoNode => HasNoCurrentBind(p))
+
+BackoffConsistency ==
+  \A p \in Pods:
+    (phase[p] # "Backoff" => backoff[p] = 0)
+
+BindHistoryNotFromFuture ==
+  \A p \in Pods, g \in Generations, n \in Nodes:
+    (<<p, g, n>> \in bindHistory => g <= generation[p])
+
+PriorGenerationsWereBound ==
+  \A p \in Pods, g \in Generations:
+    (g < generation[p]
+      => \E n \in Nodes: <<p, g, n>> \in bindHistory)
+
 UnassignedPhasesHaveNoNode ==
   \A p \in Pods:
     (phase[p] \in {"Gated", "Pending", "Backoff", "Unschedulable",
@@ -528,6 +608,11 @@ SafetyInvariants ==
   /\ NoLeakedReservations
   /\ SingleBinding
   /\ AssignedImpliesBindHistory
+  /\ AssignedPhasesHaveNode
+  /\ ReservationPrecedesCurrentBind
+  /\ BackoffConsistency
+  /\ BindHistoryNotFromFuture
+  /\ PriorGenerationsWereBound
   /\ UnassignedPhasesHaveNoNode
   /\ NonReservedPhasesHaveNoReservation
   /\ GateConsistency
@@ -537,22 +622,31 @@ StableEventuallyServed ==
   \A p \in Pods:
     <> (phase[p] \in {"Running", "Degraded", "Succeeded"})
 
+QueueRecoveryEventuallyServed == StableEventuallyServed
+
 PersistentContactLossManifests ==
   \A p \in Pods, n \in Nodes:
-    (<>[] (nodeOf[p] = n /\ phase[p] \in RuntimePhases /\ link[n] = "Down"))
-      => <> (phase[p] \in {"Unknown", "Failed", "Deleting", "Deleted"})
+    []((<>[] (nodeOf[p] = n /\ phase[p] \in RuntimePhases
+              /\ link[n] = "Down"))
+       => <> (phase[p] \in {"Unknown", "Failed", "Deleting", "Deleted"}))
 
 PersistentNodeFailureManifests ==
   \A p \in Pods, n \in Nodes:
-    (<>[] (nodeOf[p] = n /\ phase[p] \in RuntimePhases
-           /\ nodeState[n] \in {"NotReady", "Unknown", "Failed"}))
-      => <> (phase[p] \in {"Unknown", "Failed", "Deleting", "Deleted"})
+    []((<>[] (nodeOf[p] = n /\ phase[p] \in RuntimePhases
+              /\ nodeState[n] \in {"NotReady", "Unknown", "Failed"}))
+       => <> (phase[p] \in {"Unknown", "Failed", "Deleting", "Deleted"}))
 
 PersistentSlowGpuHandled ==
   \A p \in Pods, n \in Nodes:
-    (<>[] (nodeOf[p] = n /\ phase[p] = "Degraded"
-           /\ NeedsGpu(p) /\ gpuState[n] = "Slow"))
-      => <> (phase[p] \in {"Succeeded", "Failed", "Deleting", "Deleted"})
+    []((<>[] (nodeOf[p] = n /\ phase[p] = "Degraded"
+              /\ NeedsGpu(p) /\ gpuState[n] = "Slow"))
+       => <> (phase[p] \in {"Succeeded", "Failed", "Deleting", "Deleted"}))
+
+PersistentGpuFaultManifests ==
+  \A p \in Pods, n \in Nodes:
+    []((<>[] (nodeOf[p] = n /\ phase[p] \in RuntimePhases
+              /\ NeedsGpu(p) /\ gpuState[n] = "Faulty"))
+       => <> (phase[p] \in {"Failed", "Deleting", "Deleted"}))
 
 PersistentReachabilityRefreshesObservation ==
   \A n \in Nodes:
