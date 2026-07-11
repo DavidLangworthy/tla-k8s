@@ -88,7 +88,7 @@ The default safety rail checks both generation 0 and one recreated generation.
 Liveness properties include:
 
 - `StableEventuallyServed`: in a stable healthy cluster, every Pod eventually reaches `Running`, `Degraded`, or `Succeeded`.
-- `QueueRecoveryEventuallyServed`: in a stable fitting cluster, a Pod already in `Backoff` or `Unschedulable` eventually reaches a served state under fair timer, requeue, reserve, bind, and start actions.
+- `QueueRecoveryEventuallyServed`: in a stable fitting cluster, Pods already in `Backoff` or `Unschedulable` each eventually reach a served state under fair timer, requeue, reserve, bind, and start actions.
 - `PersistentContactLossManifests`: from every point after which an active Pod remains disconnected, a later state is `Unknown`, `Failed`, `Deleting`, or `Deleted`.
 - `PersistentNodeFailureManifests`: from every point after which an active Pod remains on a failed node, the failure later manifests in the Pod lifecycle.
 - `PersistentSlowGpuHandled`: from every point after which slow-GPU degradation persists, the Pod is later completed, failed, or deleted under fair detection.

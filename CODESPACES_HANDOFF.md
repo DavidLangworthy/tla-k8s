@@ -139,8 +139,9 @@ TIMEOUT_SECONDS=600 make explore \
 - Negative controls were run and removed: broken `Bind` and history-erasing
   recreation transitions violated their targeted invariants, while removing
   lost-contact or GPU-fault fairness produced temporal counterexamples.
-- Queue recovery checked both `Backoff` and `Unschedulable` seeds:
-  `17 states generated`, `7 distinct states found`, depth 5, and no error.
+- Queue recovery checked two concurrent Pods across all four `Backoff` and
+  `Unschedulable` seed combinations: `165 states generated`,
+  `49 distinct states found`, depth 9, and no error.
   Removing timer or requeue fairness produced the expected stuttering
   counterexamples. `Unschedulable` can no longer reserve before requeueing.
 - Safety exploration configs ending in `-sym.cfg` use `ModelSymmetry`; the
